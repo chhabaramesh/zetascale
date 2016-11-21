@@ -3483,6 +3483,15 @@
 160310 ZSMPut is supported only on btree and log containers\n
 160311 NVRAM flog reforamt with shutdown = %d.\n
 160312 Unable to start the in progress container delete thread.
+160313 Init WS with fd = %d, blocks = %ld, block size = %ld, chunk size = %ld, nvram size = %ld.\n
+160314 Init NVLOG for flog dev offset=%ld, fd=%d.\n
+160315 NVLOG failed to truncate file fd=%d.\n
+160316 Truncating/new create fd=%d size=%lu.\n
+160317 NVLOG file open fdf =%d, offset_in_dev=%ld, size=%ld.\n
+160318 NVLOG file read fd=%d, offset=%ld, length=%ld.\n
+160319 NVLOG file read failed on fd=%d, offset=%ld, length=%ld.\n
+160320 NVLOG file write fd=%d, offset=%ld, length=%ld.\n
+160321 NVLOG file write failed on fd=%d, offset=%ld, length=%ld.\n
 
 
 # rico

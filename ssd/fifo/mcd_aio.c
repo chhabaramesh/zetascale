@@ -1485,7 +1485,7 @@ int mcd_aio_init( void * state, char * dname )
 		gc_cfg.num_streams = 2;
 		ws_init(total_blks, blk_size, chunk_size, &gc_cfg, nvram_area, nvram_size, dev_fd, 5000000, &max_blks, stdout, false, reformat);
 
-	 	mcd_log_msg(PLAT_LOG_ID_INITIAL, PLAT_LOG_LEVEL_INFO, "Init WS with fd = %d, blocks = %ld, block size = %ld,"
+	 	mcd_log_msg(160313, PLAT_LOG_LEVEL_INFO, "Init WS with fd = %d, blocks = %ld, block size = %ld,"
 			   " chunk size = %ld, nvram size = %ld.\n", dev_fd, total_blks, blk_size, chunk_size, nvram_size);
 
          }
