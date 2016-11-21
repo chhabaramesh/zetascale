@@ -164,6 +164,28 @@ static int		write_fault_sync( int, ulong);
 
 static pthread_mutex_t _meta_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+bool _zs_with_zs = false;
+
+ssize_t 
+dev_read(int fd, void *buf, size_t count, off_t offset)
+{
+  if (_zs_with_zs) {
+  	return ws_read(fd, buf, count, offset);
+  } else {
+  	return pread(fd, buf, count, offset);
+  }
+}
+
+ssize_t 
+dev_write(int fd, const void *buf, size_t count, off_t offset)
+{
+  if (_zs_with_zs) {
+  	return ws_write(fd, (void *) buf, count, offset);
+  } else {
+  	return pwrite(fd, buf, count, offset);
+  }
+}
+
 static
 int mcd_aio_read_unaligned(osd_state_t * context, char * buf, uint64_t offset, int nbytes)
 {
@@ -182,7 +204,7 @@ int mcd_aio_read_unaligned(osd_state_t * context, char * buf, uint64_t offset, i
 			n = nbytes;
 
 		//if (pread(aio_fd, _buf, Mcd_osd_blk_size, b) != Mcd_osd_blk_size) {
-		if (ws_read(aio_fd, _buf, Mcd_osd_blk_size, b) != Mcd_osd_blk_size) {
+		if (dev_read(aio_fd, _buf, Mcd_osd_blk_size, b) != Mcd_osd_blk_size) {
 			mcd_log_msg(150031, PLAT_LOG_LEVEL_ERROR, "pread failed - %s", plat_strerror(errno));
 			return FLASH_EIO;
 		}
@@ -197,7 +219,7 @@ int mcd_aio_read_unaligned(osd_state_t * context, char * buf, uint64_t offset, i
 	n = (nbytes / Mcd_osd_blk_size) * Mcd_osd_blk_size;
 
 	//if (n && pread(aio_fd, buf, n, offset) != n) {
-	if (n && ws_read(aio_fd, buf, n, offset) != n) {
+	if (n && dev_read(aio_fd, buf, n, offset) != n) {
 		mcd_log_msg(150031, PLAT_LOG_LEVEL_ERROR, "pread failed - %s", plat_strerror(errno));
 		return FLASH_EIO;
 	}
@@ -206,7 +228,7 @@ int mcd_aio_read_unaligned(osd_state_t * context, char * buf, uint64_t offset, i
 		plat_assert(nbytes - n < Mcd_osd_blk_size);
 		b = offset + n;
 		//if (pread(aio_fd, _buf, Mcd_osd_blk_size, b) != Mcd_osd_blk_size) {
-		if (ws_read(aio_fd, _buf, Mcd_osd_blk_size, b) != Mcd_osd_blk_size) {
+		if (dev_read(aio_fd, _buf, Mcd_osd_blk_size, b) != Mcd_osd_blk_size) {
 			mcd_log_msg(150031, PLAT_LOG_LEVEL_ERROR, "pread failed - %s", plat_strerror(errno));
 			return FLASH_EIO;
 		}
@@ -236,13 +258,13 @@ int mcd_aio_write_unaligned(osd_state_t * context, char * buf, uint64_t offset, 
 			n = nbytes;
 
 		//if (pread(aio_fd, _buf, Mcd_osd_blk_size, b) != Mcd_osd_blk_size) {
-		if (ws_read(aio_fd, _buf, Mcd_osd_blk_size, b) != Mcd_osd_blk_size) {
+		if (dev_read(aio_fd, _buf, Mcd_osd_blk_size, b) != Mcd_osd_blk_size) {
 			mcd_log_msg(150031, PLAT_LOG_LEVEL_ERROR, "pread failed - %s", plat_strerror(errno));
 			return FLASH_EIO;
 		}
 		memcpy(_buf + o, buf, n);
 		//if (pwrite(aio_fd, _buf, Mcd_osd_blk_size, b) != Mcd_osd_blk_size) {
-		if (ws_write(aio_fd, _buf, Mcd_osd_blk_size, b) != Mcd_osd_blk_size) {
+		if (dev_write(aio_fd, _buf, Mcd_osd_blk_size, b) != Mcd_osd_blk_size) {
 			mcd_log_msg(180002, PLAT_LOG_LEVEL_ERROR, "pwrite failed!(%s)", plat_strerror(errno));
 			return FLASH_EIO;
 		}
@@ -254,7 +276,7 @@ int mcd_aio_write_unaligned(osd_state_t * context, char * buf, uint64_t offset, 
 	n = (nbytes / Mcd_osd_blk_size) * Mcd_osd_blk_size;
 
 	//if (n && pwrite(aio_fd, buf, n, offset) != n) {
-	if (n && ws_write(aio_fd, buf, n, offset) != n) {
+	if (n && dev_write(aio_fd, buf, n, offset) != n) {
 		mcd_log_msg(180002, PLAT_LOG_LEVEL_ERROR, "pwrite failed!(%s)", plat_strerror(errno));
 		return FLASH_EIO;
 	}
@@ -263,13 +285,13 @@ int mcd_aio_write_unaligned(osd_state_t * context, char * buf, uint64_t offset, 
 		plat_assert(nbytes - n < Mcd_osd_blk_size);
 		b = offset + n;
 		//if (pread(aio_fd, _buf, Mcd_osd_blk_size, b) != Mcd_osd_blk_size) {
-		if (ws_read(aio_fd, _buf, Mcd_osd_blk_size, b) != Mcd_osd_blk_size) {
+		if (dev_read(aio_fd, _buf, Mcd_osd_blk_size, b) != Mcd_osd_blk_size) {
 			mcd_log_msg(150031, PLAT_LOG_LEVEL_ERROR, "pread failed - %s", plat_strerror(errno));
 			return FLASH_EIO;
 		}
 		memcpy(_buf, buf + n, nbytes - n);
 		//if (pwrite(aio_fd, _buf, Mcd_osd_blk_size, b) != Mcd_osd_blk_size) {
-		if (ws_write(aio_fd, _buf, Mcd_osd_blk_size, b) != Mcd_osd_blk_size) {
+		if (dev_write(aio_fd, _buf, Mcd_osd_blk_size, b) != Mcd_osd_blk_size) {
 			mcd_log_msg(180002, PLAT_LOG_LEVEL_ERROR, "pwrite failed!(%s)", plat_strerror(errno));
 			return FLASH_EIO;
 		}
@@ -358,7 +380,7 @@ mcd_fth_aio_blk_read( osd_state_t * context, char * buf, uint64_t offset, int nb
         }
 
 	//if (pread(aio_fd, buf+submitted, aio_nbytes, aio_offset) != aio_nbytes) {
-	if (ws_read(aio_fd, buf+submitted, aio_nbytes, aio_offset) != aio_nbytes) {
+	if (dev_read(aio_fd, buf+submitted, aio_nbytes, aio_offset) != aio_nbytes) {
             mcd_log_msg(150031, PLAT_LOG_LEVEL_ERROR, "pread failed - %s",
 			plat_strerror(errno));
             return FLASH_EIO;
@@ -576,7 +598,7 @@ mcd_fth_aio_blk_write_low( osd_state_t * context, char * buf, uint64_t offset,
 	else
 #endif
 	//if (pwrite(aio_fd, buf+submitted, aio_nbytes, aio_offset) != aio_nbytes) {
-	if (ws_write(aio_fd, buf+submitted, aio_nbytes, aio_offset) != aio_nbytes) {
+	if (dev_write(aio_fd, buf+submitted, aio_nbytes, aio_offset) != aio_nbytes) {
             mcd_log_msg(180002, PLAT_LOG_LEVEL_ERROR, "pwrite failed!(%s)", plat_strerror(errno));
             return FLASH_EIO;
 	}
@@ -1461,32 +1483,36 @@ int mcd_aio_init( void * state, char * dname )
 				Mcd_aio_fds[i] = open( fname, open_flags, 00600 );
 	   //Call ws_init on the given fd
 	 {
-		uint64_t max_blks = 0;
-                int dev_fd = Mcd_aio_fds[i];
-//		int64_t storage_size = getProperty_LongInt("ZS_FLASH_SIZE", 0);
-	 	int64_t storage_size = (long int) getProperty_Int("ZS_WS_FLASH_SIZE", ZS_MIN_FLASH_SIZE) * 1024 * 1024 * 1024;
-		bool reformat = getProperty_Int("ZS_REFORMAT", 0);
-		ws_gc_config_t gc_cfg = {0};
-		uint64_t blk_size = 4096;
-		uint64_t total_blks = storage_size / blk_size;
-		uint64_t chunk_size = blk_size * 256;
-		uint64_t nvram_size = (uint64_t) 1024 * 1024 * 4096;
-		char *nvram_area = (char *) malloc(nvram_size);
 
-		gc_cfg.num_threads = 16;
-		gc_cfg.op_speed_psec = 10000;
-		gc_cfg.free_speed_psec = 10000;
-		gc_cfg.chunk_gc_threshold_pct = 80;
-		//gc_cfg.gc_type = QUEUE_BASED_GC;
-	//	gc_cfg.gc_type = ZONE_BASED_GC;
-		gc_cfg.gc_type = HISTO_QUEUE_BASED;
-		gc_cfg.gc_start_pct = 69;
-		gc_cfg.gc_rush_pct = 90;
-		gc_cfg.num_streams = 2;
-		ws_init(total_blks, blk_size, chunk_size, &gc_cfg, nvram_area, nvram_size, dev_fd, 5000000, &max_blks, stdout, false, reformat);
+                _zs_with_zs = getProperty_Int("ZS_WITH_WS", 0);
+         	if (_zs_with_zs) {
+			uint64_t max_blks = 0;
+			int dev_fd = Mcd_aio_fds[i];
+	//		int64_t storage_size = getProperty_LongInt("ZS_FLASH_SIZE", 0);
+			int64_t storage_size = (long int) getProperty_Int("ZS_WS_FLASH_SIZE", ZS_MIN_FLASH_SIZE) * 1024 * 1024 * 1024;
+			bool reformat = getProperty_Int("ZS_REFORMAT", 0);
+			ws_gc_config_t gc_cfg = {0};
+			uint64_t blk_size = 4096;
+			uint64_t total_blks = storage_size / blk_size;
+			uint64_t chunk_size = blk_size * 256;
+			uint64_t nvram_size = (uint64_t) 1024 * 1024 * 4096;
+			char *nvram_area = (char *) malloc(nvram_size);
 
-	 	mcd_log_msg(160313, PLAT_LOG_LEVEL_INFO, "Init WS with fd = %d, blocks = %ld, block size = %ld,"
-			   " chunk size = %ld, nvram size = %ld.\n", dev_fd, total_blks, blk_size, chunk_size, nvram_size);
+			gc_cfg.num_threads = 16;
+			gc_cfg.op_speed_psec = 10000;
+			gc_cfg.free_speed_psec = 10000;
+			gc_cfg.chunk_gc_threshold_pct = 80;
+			//gc_cfg.gc_type = QUEUE_BASED_GC;
+		//	gc_cfg.gc_type = ZONE_BASED_GC;
+			gc_cfg.gc_type = HISTO_QUEUE_BASED;
+			gc_cfg.gc_start_pct = 69;
+			gc_cfg.gc_rush_pct = 90;
+			gc_cfg.num_streams = 2;
+			ws_init(total_blks, blk_size, chunk_size, &gc_cfg, nvram_area, nvram_size, dev_fd, 5000000, &max_blks, stdout, false, reformat);
+
+			mcd_log_msg(160313, PLAT_LOG_LEVEL_INFO, "Init WS with fd = %d, blocks = %ld, block size = %ld,"
+				   " chunk size = %ld, nvram size = %ld.\n", dev_fd, total_blks, blk_size, chunk_size, nvram_size);
+		}
 
          }
 	  
