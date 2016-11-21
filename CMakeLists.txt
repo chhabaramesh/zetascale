@@ -116,9 +116,9 @@ $<TARGET_OBJECTS:clipper>
 $<TARGET_OBJECTS:fifo> 
 )
 add_dependencies(${LIBRARY} ffdc)
-target_link_libraries( ${LIBRARY} pthread aio event snappy lz4 rt)
+target_link_libraries( ${LIBRARY} pthread aio event snappy lz4 rt ws)
 #
-install(TARGETS zs DESTINATION ${CMAKE_INSTALL_LIBDIR})
+#install(TARGETS zs DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 IF(BUILD_SHARED)
 	SET_TARGET_PROPERTIES(${LIBRARY} PROPERTIES 

@@ -98,6 +98,8 @@
 __thread char *compression_buf = NULL; 
 __thread int compression_buf_len = 0 ; 
 
+
+
 /*
 ** Globals
 */
@@ -2294,6 +2296,7 @@ ZSInitVersioned(struct ZS_state **zs_state, uint32_t api_version)
 		rawobjratio = get_rawobjratio();
 		ext_cbs->zs_raw_cb(storm_mode, rawobjsz, rawobjratio);
 	}
+
 	return (ZS_SUCCESS);
 }
 
@@ -2875,6 +2878,8 @@ ZS_status_t ZSShutdown(struct ZS_state *zs_state)
 		snprintf(temp, sizeof(temp), "rm -rf %s/zs_%d", log_flush_dir, zs_instance_id);
 		ignore(system(temp));
 	}
+
+    mcd_aio_dev_close();
     plat_log_msg(80033, PLAT_LOG_CAT_SDF_PROT,
                          PLAT_LOG_LEVEL_DEBUG, "Shutdown completed");
        return status;

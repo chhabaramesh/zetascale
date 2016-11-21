@@ -116,7 +116,7 @@ bool
 nv_init(uint64_t block_size, int num_recs, uint64_t dev_offset, int fd)
 {
 
-	mcd_log_msg(PLAT_LOG_ID_INITIAL, PLAT_LOG_LEVEL_INFO,
+	mcd_log_msg(160313, PLAT_LOG_LEVEL_INFO,
 			"Init NVLOG for flog dev offset=%ld, fd=%d.\n", dev_offset, fd);
 
 	pthread_mutex_lock(&nv_mutex);
@@ -184,7 +184,7 @@ nv_zero_out(int fd, uint64_t length)
 	for (i = 0 ; i < blks; i++) {
 		ret = nv_write(fd, zbuf, nv_dev_block_size, i * nv_dev_block_size);
 		if (ret <= 0) {
-			mcd_log_msg(PLAT_LOG_ID_INITIAL, PLAT_LOG_LEVEL_INFO,
+			mcd_log_msg(160314, PLAT_LOG_LEVEL_INFO,
 				"NVLOG failed to truncate file fd=%d.\n", fd);
 			exit(-1);
 		}
@@ -213,7 +213,7 @@ nv_open(char *name, int flags, mode_t mode)
 				/*
 				 * open in truncate mode Clear the range of blocks
 				 */
-				mcd_log_msg(PLAT_LOG_ID_INITIAL, PLAT_LOG_LEVEL_INFO, 
+				mcd_log_msg(160315, PLAT_LOG_LEVEL_INFO, 
 						"Truncating/new create fd=%d size=%lu.\n", nvd_fd[fd].fd, nv_flog_file_size);
 				nv_zero_out(fd, nv_flog_file_size);
 			}
@@ -232,7 +232,7 @@ nv_open(char *name, int flags, mode_t mode)
 	nvd_fd[fd].size = nv_flog_file_size;
 	nvd_fd[fd].offset = 0;
 
-	mcd_log_msg(PLAT_LOG_ID_INITIAL, PLAT_LOG_LEVEL_INFO,
+	mcd_log_msg(160316, PLAT_LOG_LEVEL_INFO,
 		"NVLOG file open fdf =%d, offset_in_dev=%ld, size=%ld.\n",
 		 nvd_fd[fd].fd,  nvd_fd[fd].offset_in_dev, nvd_fd[fd].size);
 
@@ -257,7 +257,7 @@ nv_read(int fd, void *buf, size_t nbytes)
 	int ret = 0;
 	off_t off = nvd_fd[fd].offset + nvd_fd[fd].offset_in_dev;
 
-	mcd_log_msg(PLAT_LOG_ID_INITIAL, PLAT_LOG_LEVEL_DEBUG,
+	mcd_log_msg(160317, PLAT_LOG_LEVEL_DEBUG,
 		"NVLOG file read fd=%d, offset=%ld, length=%ld.\n", fd, off, nbytes);
 
 	plat_assert(fd > 0 && fd < NUM_FLOG_FILES);
@@ -270,7 +270,7 @@ nv_read(int fd, void *buf, size_t nbytes)
 
 	ret = pread(nv_dev_fd, buf, nbytes, off);
 	if (ret <= 0) {
-		mcd_log_msg(PLAT_LOG_ID_INITIAL, PLAT_LOG_LEVEL_INFO,
+		mcd_log_msg(160318, PLAT_LOG_LEVEL_INFO,
 			"NVLOG file read failed on fd=%d, offset=%ld, length=%ld.\n", fd, off, nbytes);
 		return 0;
 	}
@@ -294,12 +294,12 @@ nv_write(int fd, const void *buf, size_t nbytes, off_t off)
 
 	off += nvd_fd[fd].offset_in_dev;
 
-	mcd_log_msg(PLAT_LOG_ID_INITIAL, PLAT_LOG_LEVEL_DEBUG,
+	mcd_log_msg(160319, PLAT_LOG_LEVEL_DEBUG,
 		"NVLOG file write fd=%d, offset=%ld, length=%ld.\n", fd, off, nbytes);
 
 	ret = pwrite(nv_dev_fd, buf, nbytes, off);
 	if (ret <= 0) {
-		mcd_log_msg(PLAT_LOG_ID_INITIAL, PLAT_LOG_LEVEL_INFO,
+		mcd_log_msg(160320, PLAT_LOG_LEVEL_INFO,
 			"NVLOG file write failed on fd=%d, offset=%ld, length=%ld.\n", fd, off, nbytes);
 		exit(-1);	
 	}

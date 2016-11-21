@@ -122,6 +122,8 @@ extern mcd_aio_ctxt_t           Mcd_aio_ctxt;
  *                                                                      *
  ************************************************************************/
 
+extern void
+mcd_aio_dev_close();
 extern aio_state_t *mcd_aio_init_state();
 extern void mcd_aio_free_state(aio_state_t *aio_state);
 
