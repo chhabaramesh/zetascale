@@ -101,15 +101,17 @@ do_mput(struct ZS_thread_state *thd_state, ZS_cguid_t cguid)
 			}
 		}
 
-        k += num_objs;
+		k += num_objs;
 
 		if (use_mput) {
+			ZSTransactionStart(thd_state);
 			status = ZSMPut(thd_state, cguid, num_objs, &objs[0], flags, &objs_written);
 			if (status != ZS_SUCCESS) {
-				printf("Failed to write objects using ZSMPut, status = %d.\n",
-					status);
+				ZSTransactionRollback(thd_state);
+				printf("Failed to write objects using ZSMPut, status = %d.\n", status);
 				return ;
 			}
+			ZSTransactionCommit(thd_state);
 			num_zs_mputs++;
 		}
 

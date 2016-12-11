@@ -62,6 +62,7 @@ ADD_LIBRARY(platform OBJECT aio_api.c
 	sysvipc.c
 	thread.c
 	time.c
+  zs_aio.c
 	${ffdc_log_files}
         )
 add_subdirectory(tool/hotkey)

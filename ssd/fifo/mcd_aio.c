@@ -57,6 +57,10 @@
 
 extern int zs_instance_id;
 
+#include "platform/zs_aio.h"
+extern zs_aio_ctxt_t ctxt;
+
+
 #include "fth/fth.h"
 #include "ssd/ssd_aio.h"
 #include "ssd/ssd_aio_local.h"
@@ -109,6 +113,7 @@ int                     Mcd_aio_sub_files       = 0;
 int                     Mcd_aio_raid_device     = 0;
 uint64_t                Mcd_aio_total_size      = 0;
 uint64_t                Mcd_aio_real_size       = 0;
+int __zs_aio_enabled = 0;
 
 uint64_t stat_n_data_fsyncs = 0;
 uint64_t stat_n_data_writes = 0;
@@ -477,6 +482,8 @@ mcd_fth_aio_blk_read( osd_state_t * context, char * buf, uint64_t offset, int nb
     return FLASH_EOK;   /* SUCCESS */
 }
 
+extern  __thread zs_aio_ctxt_t _zs_aio_ctxt;
+extern int __thread _zs_do_async_io;
 
 int
 mcd_fth_aio_blk_write_low( osd_state_t * context, char * buf, uint64_t offset,
@@ -564,9 +571,17 @@ mcd_fth_aio_blk_write_low( osd_state_t * context, char * buf, uint64_t offset,
 		write_fault_injector( aio_fd, buf+submitted, aio_nbytes, aio_offset);
 	else
 #endif
-	if (pwrite(aio_fd, buf+submitted, aio_nbytes, aio_offset) != aio_nbytes) {
-            mcd_log_msg(180002, PLAT_LOG_LEVEL_ERROR, "pwrite failed!(%s)", plat_strerror(errno));
-            return FLASH_EIO;
+	if (!(__zs_aio_enabled && _zs_do_async_io)) {
+		if (pwrite(aio_fd, buf+submitted, aio_nbytes, aio_offset) != aio_nbytes) {
+			mcd_log_msg(180002, PLAT_LOG_LEVEL_ERROR, "pwrite failed!(%s)", plat_strerror(errno));
+			return FLASH_EIO;
+		}
+	} else {
+		/*
+		 * submit the aio in current transaction context.
+		 */
+		int r = zs_aio_submit(&_zs_aio_ctxt, aio_fd, aio_offset, aio_nbytes, buf + submitted);
+		plat_assert(r == 0);
 	}
 
         // io_prep_pwrite( &acb->iocb, aio_fd, buf + submitted, aio_nbytes, aio_offset );
@@ -1310,6 +1325,8 @@ int mcd_aio_init( void * state, char * dname )
         plat_abort();
     }
     Mcd_aio_real_size  = Mcd_aio_total_size;
+
+    __zs_aio_enabled = getProperty_Int("ZS_AIO_ENABLED", 0);
 
     /*
      * get sync flash_settings from the property file

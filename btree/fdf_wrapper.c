@@ -41,6 +41,8 @@
 #include <assert.h>
 #include <sched.h>
 #include <api/zs.h>
+#include <platform/zs_aio.h>
+
 #include "zs.h"
 #include "api/fdf_internal.h"
 #include "fdf_internal_cb.h"
@@ -123,6 +125,11 @@ int btree_parallel_flush_minbufs = 3;
 static uint64_t  n_reads = 0;
 
 __thread struct ZS_thread_state *my_thd_state;
+
+extern int __zs_aio_enabled;
+__thread zs_aio_ctxt_t _zs_aio_ctxt;
+__thread int _zs_do_async_io;
+
 struct ZS_state *my_global_zs_state;
 __thread bool bad_container = 0;
 uint64_t invoke_scavenger_per_n_obj_del = 10000;
@@ -3087,6 +3094,15 @@ _ZSTransactionStart(struct ZS_thread_state *zs_thread_state)
 
 	__fdf_txn_mode_state = (__fdf_txn_mode_state == FDF_TXN_NONE_MODE)? __fdf_txn_mode_state_global: __fdf_txn_mode_state;
 
+
+	/*
+	 * Setup the io context for async IO
+	 */
+	if (__zs_aio_enabled) {
+		zs_aio_init(&_zs_aio_ctxt);
+		_zs_do_async_io = 1;
+	}
+
 	if (__fdf_txn_mode_state == FDF_TXN_BTREE_MODE) {
 		return (ZSTransactionService(zs_thread_state, 0, 0));
 	} else {
@@ -3104,6 +3120,12 @@ _ZSTransactionCommit(struct ZS_thread_state *zs_thread_state)
 
 	if (bt_is_license_valid() == false) {
 		return (ZS_LICENSE_CHK_FAILED);
+	}
+
+	if (__zs_aio_enabled) {
+		zs_aio_wait_completion(&_zs_aio_ctxt);
+		zs_aio_reset(&_zs_aio_ctxt);
+		_zs_do_async_io = 0;
 	}
 
 	__fdf_txn_mode_state = (__fdf_txn_mode_state == FDF_TXN_NONE_MODE)? __fdf_txn_mode_state_global: __fdf_txn_mode_state;
@@ -3125,6 +3147,9 @@ _ZSTransactionRollback(struct ZS_thread_state *zs_thread_state)
 		return (ZS_LICENSE_CHK_FAILED);
 	}
 
+	if (__zs_aio_enabled) {
+		zs_aio_reset(&_zs_aio_ctxt);
+	}
 	__fdf_txn_mode_state = (__fdf_txn_mode_state == FDF_TXN_NONE_MODE)? __fdf_txn_mode_state_global: __fdf_txn_mode_state;
 	if (__fdf_txn_mode_state == FDF_TXN_BTREE_MODE) {
 		return (ZS_UNSUPPORTED_REQUEST);
@@ -3139,6 +3164,8 @@ _ZSTransactionRollback(struct ZS_thread_state *zs_thread_state)
 ZS_status_t 
 _ZSTransactionQuit(struct ZS_thread_state *zs_thread_state)
 {
+
+  zs_aio_reset(&_zs_aio_ctxt);
 
 	if (bt_is_license_valid() == false) {
 		return (ZS_LICENSE_CHK_FAILED);
