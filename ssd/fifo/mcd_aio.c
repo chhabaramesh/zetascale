@@ -1326,7 +1326,7 @@ int mcd_aio_init( void * state, char * dname )
     }
     Mcd_aio_real_size  = Mcd_aio_total_size;
 
-    __zs_aio_enabled = getProperty_Int("ZS_AIO_ENABLED", 0);
+ //   __zs_aio_enabled = getProperty_Int("ZS_AIO_ENABLED", 0);
 
     /*
      * get sync flash_settings from the property file

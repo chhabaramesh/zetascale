@@ -741,6 +741,7 @@ ZS_status_t _ZSInitVersioned(
     const char *ZS_SCAVENGE_PER_OBJECTS = "10000";
     int NThreads = 10;
 
+    __zs_aio_enabled = getProperty_Int("ZS_AIO_ENABLED", 0);
     bt_max_num_containers = getProperty_Int("ZS_MAX_NUM_CONTAINERS", MAX_OPEN_CONTAINERS) + NUM_INTERNAL_CONTAINERS;
     if (bt_max_num_containers > MAX_OPEN_CONTAINERS)
         bt_max_num_containers = MAX_OPEN_CONTAINERS;
