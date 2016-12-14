@@ -1,7 +1,7 @@
 #ifndef __ZS_AIO_H__
 #define __ZS_AIO_H__
 
-#define ZS_AIO_MAX_IOS 128
+#define ZS_AIO_MAX_IOS 2048
 
 #include <stdint.h>
 #include <string.h>

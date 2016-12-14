@@ -33,6 +33,11 @@ zs_aio_submit(zs_aio_ctxt_t *zs_aio, int fd, off_t offset, size_t length, void *
 	int r = 0;
 	struct iocb **cb = &zs_aio->zs_iocbs[zs_aio->io_count].cb;
 
+	if (zs_aio->io_count == ZS_AIO_MAX_IOS) {
+		perror("aio limit per transaction exhausted.");
+		exit(-1);
+  }
+
 	io_prep_pwrite(*cb, fd, buf, length, offset);
 	(*cb)->data = (void *) zs_aio->io_count;
 
